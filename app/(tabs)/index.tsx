@@ -1,64 +1,76 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { NotesList } from "@/components/NotesList";
+import { useEffect } from "react";
+import { Button, StyleSheet, Text, View } from "react-native";
+import { useAuth } from "../contexts/AuthContext";
+import { useOfflineDatabase } from "../database/offlineDatabase";
+import { supabase } from "../database/supabase";
 
 export default function HomeScreen() {
+  const isOnline = true;
+  const { create, showAllNotes, showDirtyNotes, markNoteAsSynced } =
+    useOfflineDatabase();
+  const { session, user } = useAuth();
+
+  useEffect(() => {
+    const uploadChangesToSupabase = async () => {
+      try {
+        const dirtyNotes = await showDirtyNotes();
+
+        for (const note of dirtyNotes) {
+          try {
+            await supabase
+              .from("notes")
+              .upsert(note, { onConflict: "id" })
+              .then(({ error }) => {
+                if (error) {
+                  throw new Error(
+                    `Failed to upsert note ${note.id}: ${error.message}`
+                  );
+                }
+              });
+            console.log(`Note ${note.id} synced successfully.`);
+            await markNoteAsSynced(note.id);
+          } catch (noteError) {
+            console.error(`Failed to sync note ${note.id}:`, noteError);
+          }
+        }
+      } catch (error) {
+        console.log("Error uploading changes to Supabase:", error);
+      }
+    };
+
+    if (isOnline && session && user) {
+      uploadChangesToSupabase();
+    }
+  }, [session, user, isOnline, showAllNotes, markNoteAsSynced]);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View>
+      <Text>Welcome to the Notes App!</Text>
+      <Text>{isOnline ? "Online" : "Offline"}</Text>
+      <Button
+        title="Add Note"
+        onPress={async () => {
+          await create({
+            title: "New Note",
+            content: "This is a new note created from the home screen.",
+            updated_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            synced_at: null,
+            is_deleted: false,
+            dirty: true,
+          });
+        }}
+      />
+      <NotesList />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   stepContainer: {
@@ -70,6 +82,6 @@ const styles = StyleSheet.create({
     width: 290,
     bottom: 0,
     left: 0,
-    position: 'absolute',
+    position: "absolute",
   },
 });
