@@ -1,28 +1,15 @@
 import {
-  NotesDatabase,
-  useOfflineDatabase,
+  useOfflineDatabase
 } from "@/app/database/offlineDatabase";
+import { useFetchNotes } from "@/app/hooks/useFetchNotes";
 import React from "react";
 import { Button, Text, View } from "react-native";
 
 export const NotesList = () => {
-  const { showAllNotes, deleteNote } = useOfflineDatabase();
-  const [notes, setNotes] = React.useState<NotesDatabase[]>([]);
+  const { deleteNote } = useOfflineDatabase();
+  const { notes } = useFetchNotes();
 
-  React.useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const notes = await showAllNotes();
-        setNotes(notes);
-      } catch (error) {
-        console.error("Error fetching notes:", error);
-      }
-    };
-    fetchNotes();
-  }, []);
-
-  console.log(notes);
-
+  console.log(111, notes);
   return (
     <View>
       {notes.map((note) => (
@@ -33,14 +20,7 @@ export const NotesList = () => {
           <Button
             title="Delete Note"
             onPress={async () => {
-              try {
-                await deleteNote(note.id);
-                setNotes((prevNotes) =>
-                  prevNotes.filter((n) => n.id !== note.id)
-                );
-              } catch (error) {
-                console.error("Error deleting note:", error);
-              }
+              await deleteNote(note.id);
             }}
           />
         </View>

@@ -1,4 +1,5 @@
 import { useSQLiteContext } from "expo-sqlite";
+import { NoteProps } from "../contexts/notesSlice";
 
 export type NotesDatabase = {
   id: number;
@@ -54,25 +55,34 @@ export function useOfflineDatabase() {
     }
   }
 
-  async function create(data: Omit<NotesDatabase, "id">) {
+  async function create(data: NoteProps) {
     const statement = await database.prepareAsync(
-      "INSERT INTO notes (title, content, created_at, updated_at, synced_at, is_deleted, dirty) VALUES ($title, $content, $created_at, $updated_at, $synced_at, $is_deleted, $dirty)"
+      "INSERT INTO notes (id, title, content, created_at, updated_at, synced_at, is_deleted, dirty) VALUES ($id, $title, $content, $created_at, $updated_at, $synced_at, $is_deleted, $dirty)"
     );
+
+    console.log("Creating note with data:", data);
 
     try {
       const result = await statement.executeAsync({
+        $id: data.id,
         $title: data.title,
         $content: data.content,
-        $created_at: new Date().toISOString(),
-        $updated_at: new Date().toISOString(),
-        $synced_at: null,
-        $is_deleted: data.is_deleted ?? false,
-        $dirty: true,
+        $created_at: data.created_at,
+        $updated_at: data.updated_at,
+        $synced_at: data.synced_at,
+        $is_deleted: data.is_deleted,
+        $dirty: data.dirty,
       });
 
       const insertedRowId = result.lastInsertRowId
         ? result.lastInsertRowId.toString()
         : null;
+
+      if (!insertedRowId) {
+        throw new Error("Failed to insert note, no row ID returned.");
+      }
+
+      
 
       return { insertedRowId };
     } catch (error) {
