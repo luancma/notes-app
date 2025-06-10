@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface NoteProps {
   id: string;
@@ -10,21 +11,29 @@ export interface NoteProps {
   is_deleted: boolean;
   dirty: boolean;
 }
-
 export interface NotesProps {
   notes: NoteProps[];
   createNoteAction: (note: NoteProps) => void;
-  removeNote: (id: string) => void;
+  deleteNoteAction: (id: string) => void;
 }
 
-const useNotesSlice = create<NotesProps>()((set) => ({
-  notes: [],
-  createNoteAction: (notes) =>
-    set((state) => ({ notes: { ...state.notes, ...notes } })),
-  removeNote: (id) =>
-    set((state) => ({
-      notes: state.notes.filter((note) => note.id !== id),
-    })),
-}));
+const useNotesSlice = create<NotesProps>()(
+  persist(
+    (set) => ({
+      notes: [],
+      createNoteAction: (note) =>
+        set((state) => ({
+          notes: [...state.notes, note],
+        })),
+      deleteNoteAction: (id) =>
+        set((state) => ({
+          notes: state.notes.filter((note) => note.id !== id),
+        })),
+    }),
+    {
+      name: "notes-storage",
+    }
+  )
+);
 
 export { useNotesSlice };

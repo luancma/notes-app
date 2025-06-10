@@ -46,7 +46,6 @@ export function useOfflineDatabase() {
         $id: id,
         $synced_at: new Date().toISOString(),
       });
-      console.log(`Note ${id} marked as synced.`);
     } catch (error) {
       console.error("Error marking note as synced:", error);
       throw error;
@@ -59,8 +58,6 @@ export function useOfflineDatabase() {
     const statement = await database.prepareAsync(
       "INSERT INTO notes (id, title, content, created_at, updated_at, synced_at, is_deleted, dirty) VALUES ($id, $title, $content, $created_at, $updated_at, $synced_at, $is_deleted, $dirty)"
     );
-
-    console.log("Creating note with data:", data);
 
     try {
       const result = await statement.executeAsync({
@@ -93,7 +90,7 @@ export function useOfflineDatabase() {
     }
   }
 
-  const deleteNote = async (id: number) => {
+  const deleteNote = async (id: string) => {
     const statement = await database.prepareAsync(
       "DELETE FROM notes WHERE id = $id"
     );

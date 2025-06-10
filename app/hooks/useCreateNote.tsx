@@ -5,8 +5,7 @@ export const useCreateNote = () => {
   const { create } =
     useOfflineDatabase();
   const { createNoteAction } = useNotesSlice();
-
-
+  
   const createNote = async (
     note: NoteProps = {
       id: "",
@@ -20,7 +19,6 @@ export const useCreateNote = () => {
     }
   ) => {
     try {
-      console.log("Creating note:", note);
       createNoteAction(note);
       await create(note);
     } catch (error) {

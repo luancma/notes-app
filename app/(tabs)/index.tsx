@@ -25,7 +25,6 @@ export default function HomeScreen() {
         title="Add Note"
         onPress={async () => {
           const base64EncodedUser = base64.encode(JSON.stringify(new Date()));
-          console.log("Base64 Encoded User:", base64EncodedUser);
           createNote({
             id: base64EncodedUser,
             title: `Note`,

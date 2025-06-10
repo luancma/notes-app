@@ -1,15 +1,14 @@
-import {
-  useOfflineDatabase
-} from "@/app/database/offlineDatabase";
-import { useFetchNotes } from "@/app/hooks/useFetchNotes";
+import { useNotesSlice } from "@/app/contexts/notesSlice";
+import { useOfflineDatabase } from "@/app/database/offlineDatabase";
+import { useDeleteNote } from "@/app/hooks/useDeleteNote";
 import React from "react";
 import { Button, Text, View } from "react-native";
 
 export const NotesList = () => {
   const { deleteNote } = useOfflineDatabase();
-  const { notes } = useFetchNotes();
+  const { execute } = useDeleteNote();
+  const { notes } = useNotesSlice();
 
-  console.log(111, notes);
   return (
     <View>
       {notes.map((note) => (
@@ -20,7 +19,7 @@ export const NotesList = () => {
           <Button
             title="Delete Note"
             onPress={async () => {
-              await deleteNote(note.id);
+              execute(note.id);
             }}
           />
         </View>

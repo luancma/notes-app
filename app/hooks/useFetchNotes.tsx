@@ -9,7 +9,6 @@ export const useFetchNotes = () => {
     try {
       const notes = await showAllNotes();
       setNotes(notes);
-      console.log("Fetched notes:", notes);
     } catch (error) {
       console.error("Error fetching notes:", error);
     }
